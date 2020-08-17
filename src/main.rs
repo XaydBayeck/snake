@@ -143,6 +143,14 @@ impl App {
             let vertical_line_radius = (args.window_size[0] as f64) / (self.circus[0] as f64) * 0.5;
             let horizontal_line_radius =
                 (args.window_size[1] as f64) / (self.circus[1] as f64) * 0.5;
+
+            line(
+                game_colors::LIGHTBLUE,
+                horizontal_line_radius,
+                [0.0, 0.0, 0.0, args.window_size[0] as f64],
+                c.transform,
+                gl,
+            );
             line(
                 game_colors::LIGHTBLUE,
                 vertical_line_radius,
@@ -328,6 +336,8 @@ impl App {
         // 碰撞到了身体？
         for block in self.body_block.iter() {
             if self.head_block == *block {
+                //println!("Collid with body");
+                //println!("head:{:?},body:{:?}", self.head_block, block);
                 return Collision::WithSnake;
             }
         }
@@ -335,14 +345,16 @@ impl App {
         // 碰撞到了边界？
         if self.head_block.pos_x <= 0
             || self.head_block.pos_x >= self.circus[0] as i32
-            || self.head_block.pos_y >= 0
+            || self.head_block.pos_y <= 0
             || self.head_block.pos_y >= self.circus[1] as i32
         {
+            //println!("Collid with border");
             return Collision::WithBorder;
         }
 
         // 碰撞到了食物？
         if self.head_block == self.fruit_block {
+            //println!("Collid with body");
             return Collision::WithFruit;
         }
 
@@ -402,7 +414,7 @@ fn main() {
 
     // 为了能够渲染文字，需要读取字体缓存
     let texture_settings = TextureSettings::new().filter(Filter::Nearest);
-    let mut glyph_cache = GlyphCache::new("assets/Robot-Regular.ttf", (), texture_settings)
+    let mut glyph_cache = GlyphCache::new("assets/Roboto-Regular.ttf", (), texture_settings)
         .expect("Error unwrapping fonts");
 
     // 创建一个新的事件并设置更新频率
