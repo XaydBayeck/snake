@@ -117,3 +117,20 @@ impl Collision for Snake {
         }
     }
 }
+
+impl Snake {
+    fn is_colliting_with_self(&self) -> bool {
+        let ans = false;
+        for block in self.body.iter() {
+            match self.head.is_collited_by_block(block) {
+                Collited::NoCollision => continue,
+                _ => {
+                    ans = true;
+                    break;
+                }
+            }
+        }
+
+        ans
+    }
+}
