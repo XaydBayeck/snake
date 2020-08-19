@@ -104,9 +104,13 @@ impl Wall {
         };
 
         for i in 0..n {
+            let d = match rand::thread_rng().gen_bool(0.5 ) {
+                true => 1i32,
+                false => -1i32,
+            };
             let (dx, dy) = match rand::thread_rng().gen_bool(0.5) {
-                true => (rand::thread_rng().gen_range(-1, 1), 0),
-                false => (0, rand::thread_rng().gen_range(-1, 1)),
+                true => (d, 0),
+                false => (0, d),
             };
 
             let x_pre = match bricks.get(i as usize) {
@@ -120,14 +124,16 @@ impl Wall {
             };
 
             let brick = Block::new(
-                x_pre + dx,
-                y_pre + dy,
+                x_pre + dx*(i as i32),
+                y_pre + dy*(i as i32),
                 Collited::WithWall,
                 consts::LIGHTBLUE,
             );
 
             bricks.push(brick);
         }
+
+        //println!("{:?}/n", bricks);
 
         Wall { bricks }
     }
