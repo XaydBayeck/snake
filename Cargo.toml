@@ -1,8 +1,11 @@
 [package]
 name = "snake"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["sid <a15348545942@outlook.com>"]
 edition = "2018"
+description = "The game snake"
+license = "GPL 3.0"
+repository = "https://github.com/XaydBayeck/snake"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
