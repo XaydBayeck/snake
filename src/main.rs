@@ -1,4 +1,5 @@
-use collision::Collited;
+use app::App;
+use collision::{Collision, Collited};
 use rand::Rng;
 use std::cmp::min;
 
@@ -8,8 +9,25 @@ mod app;
 mod collision;
 /// 包含会用到的预设常量
 mod consts;
+/// 渲染系统
+mod render;
 
-fn main() {}
+fn main() {
+    // 这里的App是主要结构体，构建一个理论尺寸为(80, 60)的结构体
+    let mut app = App::new(80, 60);
+
+    // 运行程序
+    app.run();
+}
+
+/// 蛇的移动方向枚举
+#[derive(PartialEq, Clone)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 /// 基础的游戏实体
 #[derive(Debug, Clone, PartialEq)]
@@ -46,28 +64,28 @@ impl Wall {
     /// 边框
     /// `circus: &[u32; 2]` 是玩家的可移动范围
     pub fn board_wall(circus: &[u32; 2]) -> Self {
-        let width = circus[0] as i32 + 2;
+        let width = circus[0] as i32;
         let height = circus[1] as i32;
 
-        let wallColor = consts::LIGHTBLUE;
+        let wall_color = consts::LIGHTBLUE;
         let mut bricks = Vec::<Block>::new();
 
         // 添加上下俩个边框
         for i in 0..width {
-            let brickUp = Block::new(i, height, Collited::WithWall, wallColor);
-            let brickDown = Block::new(i, 0, Collited::WithWall, wallColor);
+            let brick_up = Block::new(i, height, Collited::WithWall, wall_color);
+            let brick_down = Block::new(i, 0, Collited::WithWall, wall_color);
 
-            bricks.push(brickUp);
-            bricks.push(brickDown);
+            bricks.push(brick_up);
+            bricks.push(brick_down);
         }
 
         // 添加左右俩个边框
         for i in 0..height {
-            let brickLeft = Block::new(i, 0, Collited::WithWall, wallColor);
-            let brickRight = Block::new(i, width, Collited::WithWall, wallColor);
+            let brick_left = Block::new(0, i, Collited::WithWall, wall_color);
+            let brick_right = Block::new(width, i, Collited::WithWall, wall_color);
 
-            bricks.push(brickLeft);
-            bricks.push(brickRight);
+            bricks.push(brick_left);
+            bricks.push(brick_right);
         }
 
         Wall { bricks }
@@ -107,6 +125,7 @@ impl Wall {
                 Collited::WithWall,
                 consts::LIGHTBLUE,
             );
+
             bricks.push(brick);
         }
 
@@ -115,6 +134,7 @@ impl Wall {
 }
 
 /// 食物实体
+#[derive(Clone)]
 pub struct Fruit {
     block: Block,
 }
@@ -138,9 +158,14 @@ impl Fruit {
 pub struct Snake {
     head: Block,
     body: Vec<Block>,
+    velocity: f64,
+    direction: Direction,
+    direction_lock: bool,
+    growth_flag: bool,
 }
 
 impl Snake {
+    // 在移动范围中央创建新的蛇蛇
     pub fn new(horizontal_block_num: u32, vertical_block_num: u32) -> Self {
         let center_x = ((horizontal_block_num as f64) * 0.5) as i32;
         let center_y = ((vertical_block_num as f64) * 0.5) as i32;
@@ -178,6 +203,69 @@ impl Snake {
                     color: consts::WHITE,
                 },
             ],
+            velocity: 6.0,
+            direction: Direction::Left,
+            direction_lock: false,
+            growth_flag: false,
         }
+    }
+
+    // 检测蛇是否与自己的身体相碰撞
+    fn is_colliting_with_self(&self) -> bool {
+        let mut ans = false;
+        for block in self.body.iter() {
+            match self.head.is_collited_by_block(block) {
+                Collited::NoCollision => continue,
+                _ => {
+                    ans = true;
+                    break;
+                }
+            }
+        }
+
+        ans
+    }
+
+    // 蛇身加长的操作方法
+    fn growth_action(&mut self) {
+        // 设置 growth_flag
+        self.growth_flag = true;
+        // 增加移动速度
+        self.velocity += 0.01;
+    }
+
+    // 移动
+    fn moving(&mut self) {
+        // 坐标移动
+        let (x, y) = match self.direction {
+            Direction::Up => (0, -1),
+            Direction::Down => (0, 1),
+            Direction::Left => (-1, 0),
+            Direction::Right => (1, 0),
+        };
+
+        // 克隆当前的坐标，会成为身体的一部分
+        let mut pre_block = self.head.clone();
+        pre_block.color = consts::WHITE;
+
+        // 更新蛇头坐标
+        self.head.pos_x += x;
+        self.head.pos_y += y;
+
+        // 通过将蛇体的当前块推到新向量来“移动”蛇
+        let mut blocks = Vec::new();
+        for block in self.body.iter_mut() {
+            blocks.push(pre_block);
+            pre_block = block.clone();
+        }
+
+        // 如果设置了增长标志，请不要浪费任何块。
+        if self.growth_flag {
+            blocks.push(pre_block);
+            self.growth_flag = false;
+        }
+
+        // 分配新的身体
+        self.body = blocks;
     }
 }

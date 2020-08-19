@@ -1,4 +1,4 @@
-use super::{Block, Fruit, Snake, Wall};
+use crate::{Block, Fruit, Snake, Wall};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Collited {
@@ -8,26 +8,26 @@ pub enum Collited {
     NoCollision,
 }
 
-trait Collision {
+pub trait Collision {
     /// 检测实体是否与另一个可碰撞实体碰撞
     /// 返回值为另一个实体的碰撞检测类型
-    fn is_colliting(&mut self, object: impl Collision) -> Collited;
+    fn is_colliting<T: Collision>(&self, object: &T) -> Collited;
 
     /// 检测实体是否被一个Block实体碰撞
     /// 返回值为该实体的碰撞检测类型
-    fn is_collited_by_block(&mut self, block: &Block) -> Collited;
+    fn is_collited_by_block(&self, block: &Block) -> Collited;
 }
 
 impl Collision for Block {
     /// 检测Block实体与其他类型的实体是否碰撞
-    fn is_colliting(&mut self, block: impl Collision) -> Collited {
+    fn is_colliting<T: Collision>(&self, block: &T) -> Collited {
         block.is_collited_by_block(self)
     }
 
     /// 检测Block实体是否与另外一个Block实体碰撞
-    fn is_collited_by_block(&mut self, block: &Block) -> Collited {
+    fn is_collited_by_block(&self, block: &Block) -> Collited {
         if self.pos_x == block.pos_x && self.pos_y == block.pos_y {
-            return self.collited;
+            return self.collited.clone();
         }
 
         Collited::NoCollision
@@ -35,7 +35,7 @@ impl Collision for Block {
 }
 
 impl Collision for Wall {
-    fn is_colliting(&mut self, object: impl Collision) -> Collited {
+    fn is_colliting<T: Collision>(&self, object: &T) -> Collited {
         let mut ans = Collited::NoCollision;
         for brick in self.bricks.iter() {
             match object.is_collited_by_block(brick) {
@@ -50,7 +50,7 @@ impl Collision for Wall {
         ans
     }
 
-    fn is_collited_by_block(&mut self, block: &Block) -> Collited {
+    fn is_collited_by_block(&self, block: &Block) -> Collited {
         let mut ans = Collited::NoCollision;
         for brick in self.bricks.iter() {
             match brick.is_collited_by_block(block) {
@@ -67,20 +67,20 @@ impl Collision for Wall {
 }
 
 impl Collision for Fruit {
-    fn is_colliting(&mut self, object: impl Collision) -> Collited {
+    fn is_colliting<T: Collision>(&self, object: &T) -> Collited {
         object.is_collited_by_block(&self.block)
     }
 
-    fn is_collited_by_block(&mut self, block: &Block) -> Collited {
+    fn is_collited_by_block(&self, block: &Block) -> Collited {
         self.block.is_collited_by_block(block)
     }
 }
 
 impl Collision for Snake {
-    fn is_colliting(&mut self, object: impl Collision) -> Collited {
+    fn is_colliting<T: Collision>(&self, object: &T) -> Collited {
         match self.head.is_colliting(object) {
             Collited::NoCollision => {
-                let ans = Collited::NoCollision;
+                let mut ans = Collited::NoCollision;
                 for block in self.body.iter() {
                     match object.is_collited_by_block(block) {
                         Collited::NoCollision => continue,
@@ -97,14 +97,14 @@ impl Collision for Snake {
         }
     }
 
-    fn is_collited_by_block(&mut self, block: &Block) -> Collited {
+    fn is_collited_by_block(&self, block: &Block) -> Collited {
         match self.head.is_collited_by_block(block) {
             Collited::NoCollision => {
-                let ans = Collited::NoCollision;
+                let mut ans = Collited::NoCollision;
                 for block in self.body.iter() {
                     match block.is_collited_by_block(block) {
                         Collited::NoCollision => continue,
-                        other => {
+                        _ => {
                             ans = Collited::WithSnake;
                             break;
                         }
@@ -115,22 +115,5 @@ impl Collision for Snake {
             }
             _ => Collited::WithSnake,
         }
-    }
-}
-
-impl Snake {
-    fn is_colliting_with_self(&self) -> bool {
-        let ans = false;
-        for block in self.body.iter() {
-            match self.head.is_collited_by_block(block) {
-                Collited::NoCollision => continue,
-                _ => {
-                    ans = true;
-                    break;
-                }
-            }
-        }
-
-        ans
     }
 }
