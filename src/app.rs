@@ -1,9 +1,9 @@
-use crate::{collision::*, consts, render::Render, Direction, Fruit, GameStatus, Snake, Wall};
+use crate::{collision::*, render::Render, Direction, Fruit, GameStatus, Snake, Wall};
 use glutin_window::GlutinWindow as Window;
-use opengl_graphics::{Filter, GlGraphics, GlyphCache, OpenGL, TextureSettings};
+use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventLoop, EventSettings, Events};
 use piston::input::*;
-use piston::{RenderArgs, UpdateArgs, WindowSettings};
+use piston::{UpdateArgs, WindowSettings};
 use rand::Rng;
 
 /// 应用程序主体结构体
@@ -33,7 +33,7 @@ impl App {
         }
 
         App {
-            game_status: GameStatus::GAMMING,
+            game_status: GameStatus::GAMING,
             circus,
             update_time: 0.0,
             score: 0,
@@ -48,7 +48,7 @@ impl App {
     fn update(&mut self, args: &UpdateArgs) {
         match self.game_status {
             // 游戏中
-            GameStatus::GAMMING => {
+            GameStatus::GAMING => {
                 // 积累下一次更新的时间
                 self.update_time += args.dt;
 
@@ -130,33 +130,34 @@ impl App {
     fn key_press(&mut self, key: Key) {
         if self.snake.direction_lock == false {
             self.snake.direction_lock = true;
-            match key {
-                Key::Up if self.snake.direction != Direction::Down => {
-                    self.snake.direction = Direction::Up;
-                }
-                Key::Down if self.snake.direction != Direction::Up => {
-                    self.snake.direction = Direction::Down;
-                }
-                Key::Left if self.snake.direction != Direction::Right => {
-                    self.snake.direction = Direction::Left;
-                }
-                Key::Right if self.snake.direction != Direction::Left => {
-                    self.snake.direction = Direction::Right;
-                }
-                Key::Space => {
-                    self.game_status = match self.game_status {
-                        GameStatus::GAMMING => GameStatus::TIMEOUT,
-                        _ => GameStatus::RESTART,
-                    }
-                }
-                Key::Return => {
-                    self.game_status = match self.game_status {
-                        GameStatus::TIMEOUT => GameStatus::GAMMING,
-                        _ => self.game_status.clone(),
-                    }
-                }
-                _ => {}
+        }
+
+        match key {
+            Key::Up if self.snake.direction != Direction::Down => {
+                self.snake.direction = Direction::Up;
             }
+            Key::Down if self.snake.direction != Direction::Up => {
+                self.snake.direction = Direction::Down;
+            }
+            Key::Left if self.snake.direction != Direction::Right => {
+                self.snake.direction = Direction::Left;
+            }
+            Key::Right if self.snake.direction != Direction::Left => {
+                self.snake.direction = Direction::Right;
+            }
+            Key::Space => {
+                self.game_status = match self.game_status {
+                    GameStatus::GAMING => GameStatus::TIMEOUT,
+                    _ => GameStatus::RESTART,
+                }
+            }
+            Key::Return => {
+                self.game_status = match self.game_status {
+                    GameStatus::TIMEOUT => GameStatus::GAMING,
+                    _ => self.game_status.clone(),
+                }
+            }
+            _ => {}
         }
     }
 

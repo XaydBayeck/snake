@@ -63,11 +63,11 @@ impl Render for App {
         let mut glyph_cache = GlyphCache::new("assets/Roboto-Regular.ttf", (), texture_settings)
             .expect("Error unwrapping fonts");
 
+        // 清空屏幕
+        clear(color::BLACK, gl);
+
         match self.game_status {
             GameStatus::TIMEOUT => {
-                // 清空屏幕
-                clear(consts::BLACK, gl);
-
                 // 绘制蛇
                 self.snake.render(&self.circus, args, gl, c);
 
@@ -93,17 +93,18 @@ impl Render for App {
 
                 // 绘制暂停信息
                 text(
-                    consts::WHITE,
+                    color::WHITE,
                     15,
-                    format!("Game stop!\nContinue by press Enter,quit by press Esc.").as_str(),
+                    format!("Game stop!Continue by press Enter,quit by press Esc.").as_str(),
                     &mut glyph_cache,
                     c.transform.trans(10.0, 40.0),
                     gl,
-                );
+                )
+                .unwrap();
 
                 // 绘制分数
                 text(
-                    consts::WHITE,
+                    color::WHITE,
                     15,
                     format!("Your score is {}", self.score).as_str(),
                     &mut glyph_cache,
@@ -112,10 +113,7 @@ impl Render for App {
                 )
                 .unwrap();
             }
-            GameStatus::GAMMING => {
-                // 清空屏幕
-                clear(consts::BLACK, gl);
-
+            GameStatus::GAMING => {
                 // 绘制蛇
                 self.snake.render(&self.circus, args, gl, c);
 
@@ -132,7 +130,7 @@ impl Render for App {
 
                 // 绘制分数
                 text(
-                    consts::WHITE,
+                    color::WHITE,
                     15,
                     format!("Your score is {}", self.score).as_str(),
                     &mut glyph_cache,
@@ -142,12 +140,9 @@ impl Render for App {
                 .unwrap();
             }
             GameStatus::GAMEOVER => {
-                // 清空屏幕
-                clear(consts::BLACK, gl);
-
                 // 显示游戏结束和分数
                 text(
-                    consts::WHITE,
+                    color::WHITE,
                     15,
                     format!("Game over! Press Space to restart, Escape to quit!").as_str(),
                     &mut glyph_cache,
@@ -158,7 +153,7 @@ impl Render for App {
 
                 // 绘制分数
                 text(
-                    consts::WHITE,
+                    color::WHITE,
                     15,
                     format!("Your score is {}", self.score).as_str(),
                     &mut glyph_cache,

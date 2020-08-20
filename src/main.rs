@@ -280,7 +280,7 @@ impl Snake {
 #[derive(Debug, PartialEq, Clone)]
 pub enum GameStatus {
     TIMEOUT,  // 游戏暂停
-    GAMMING,  // 游戏进行中
+    GAMING,  // 游戏进行中
     GAMEOVER, // 游戏结束
     RESTART,  // 游戏重启
 }

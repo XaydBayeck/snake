@@ -1,6 +1,6 @@
 [package]
 name = "snake"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["sid <a15348545942@outlook.com>"]
 edition = "2018"
 description = "The game snake"
