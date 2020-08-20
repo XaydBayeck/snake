@@ -104,7 +104,7 @@ impl Wall {
         };
 
         for i in 0..n {
-            let d = match rand::thread_rng().gen_bool(0.5 ) {
+            let d = match rand::thread_rng().gen_bool(0.5) {
                 true => 1i32,
                 false => -1i32,
             };
@@ -124,8 +124,8 @@ impl Wall {
             };
 
             let brick = Block::new(
-                x_pre + dx*(i as i32),
-                y_pre + dy*(i as i32),
+                x_pre + dx * (i as i32),
+                y_pre + dy * (i as i32),
                 Collited::WithWall,
                 consts::LIGHTBLUE,
             );
@@ -274,4 +274,13 @@ impl Snake {
         // 分配新的身体
         self.body = blocks;
     }
+}
+
+/// 游戏状态机
+#[derive(Debug, PartialEq, Clone)]
+pub enum GameStatus {
+    TIMEOUT,  // 游戏暂停
+    GAMMING,  // 游戏进行中
+    GAMEOVER, // 游戏结束
+    RESTART,  // 游戏重启
 }

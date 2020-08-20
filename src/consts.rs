@@ -2,6 +2,8 @@
 pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 /// 黑色
 pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+/// 半透明灰色
+pub const GRAY: [f32; 4] = [0.2, 0.2, 0.2, 0.4];
 /// 蓝色
 #[warn(dead_code)]
 pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
