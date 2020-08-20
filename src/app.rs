@@ -1,14 +1,13 @@
 use crate::{collision::*, render::Render, Direction, Fruit, GameStatus, Snake, Wall};
 use glutin_window::GlutinWindow as Window;
-use opengl_graphics::{GlGraphics, OpenGL};
+use opengl_graphics::{GlGraphics, OpenGL, GlyphCache,TextureSettings,Filter};
 use piston::event_loop::{EventLoop, EventSettings, Events};
 use piston::input::*;
 use piston::{UpdateArgs, WindowSettings};
 use rand::Rng;
 
 /// 应用程序主体结构体
-#[derive(Clone)]
-pub struct App {
+pub struct App<'a> {
     pub game_status: GameStatus, // 游戏状态机
     pub circus: [u32; 2],        // 移动空间
     update_time: f64,            // 记录一次更新后的时间
@@ -17,9 +16,10 @@ pub struct App {
     pub walls: Vec<Wall>,        // 随机生成的墙壁
     pub fruit: Fruit,            // 食物
     pub snake: Snake,            // 蛇蛇
+    pub glyph_cache:GlyphCache<'a>,
 }
 
-impl App {
+impl App<'_> {
     /// 建立新的App实例
     pub fn new(horizontal_block_num: u32, vertical_block_num: u32) -> Self {
         let circus = [horizontal_block_num, vertical_block_num];
@@ -32,6 +32,11 @@ impl App {
             walls.push(Wall::randnew(Some(brick_num), &circus));
         }
 
+        // 为了能够渲染文字，需要读取字体缓存
+        let texture_settings = TextureSettings::new().filter(Filter::Nearest);
+        let glyph_cache = GlyphCache::new("assets/Roboto-Regular.ttf", (), texture_settings)
+            .expect("Error unwrapping fonts");
+
         App {
             game_status: GameStatus::GAMING,
             circus,
@@ -41,6 +46,7 @@ impl App {
             walls,
             fruit: Fruit::randnew(horizontal_block_num, vertical_block_num),
             snake: Snake::new(horizontal_block_num, vertical_block_num),
+            glyph_cache,
         }
     }
 
@@ -180,11 +186,13 @@ impl App {
         let ref mut events = Events::new(EventSettings::new());
         events.set_ups(60);
 
+        let circus = self.circus;
+
         // piston引擎的主要循环，是以迭代器的形式实现的
         while let Some(e) = events.next(&mut window) {
             if let Some(args) = e.render_args() {
                 gl.draw(args.viewport(), |c, gl| {
-                    self.render(&self.circus, &args, gl, c);
+                    self.render( &circus, &args, gl, c);
                 });
             }
             if let Some(args) = e.update_args() {
@@ -193,6 +201,27 @@ impl App {
             if let Some(button) = e.press_args() {
                 self.press(&button);
             }
+        }
+    }
+}
+
+impl Clone for App<'_> {
+    fn clone(&self) -> Self {
+        // 为了能够渲染文字，需要读取字体缓存
+        let texture_settings = TextureSettings::new().filter(Filter::Nearest);
+        let glyph_cache = GlyphCache::new("assets/Roboto-Regular.ttf", (), texture_settings)
+            .expect("Error unwrapping fonts");
+
+        App {
+            game_status: self.game_status.clone(),
+            circus: self.circus,
+            update_time: self.update_time,
+            score: self.score,
+            board_wall: self.board_wall.clone(),
+            walls: self.walls.clone(),
+            fruit: self.fruit.clone(),
+            snake: self.snake.clone(),
+            glyph_cache
         }
     }
 }

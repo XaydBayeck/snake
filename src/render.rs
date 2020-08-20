@@ -4,7 +4,7 @@ use opengl_graphics::{Filter, GlGraphics, GlyphCache, TextureSettings};
 use piston::RenderArgs;
 
 pub trait Render {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context);
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context);
 
     fn renderable_rect(circus: &[u32; 2], block: &Block, args: &RenderArgs) -> [f64; 4] {
         let block_size_x = args.window_size[0] / (circus[0] as f64);
@@ -22,7 +22,7 @@ pub trait Render {
 }
 
 impl Render for Block {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
         rectangle(
             self.color,
             Block::renderable_rect(circus, &self, args),
@@ -33,38 +33,45 @@ impl Render for Block {
 }
 
 impl Render for Wall {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
-        for block in self.bricks.iter() {
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
+        for block in self.bricks.iter_mut() {
             block.render(circus, args, gl, c);
         }
     }
 }
 
 impl Render for Fruit {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
         self.block.render(circus, args, gl, c);
     }
 }
 
 impl Render for Snake {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
         self.head.render(circus, args, gl, c);
 
-        for block in self.body.iter() {
+        for block in self.body.iter_mut() {
             block.render(circus, args, gl, c);
         }
     }
 }
 
-impl Render for App {
-    fn render(&self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
-        // 为了能够渲染文字，需要读取字体缓存
-        let texture_settings = TextureSettings::new().filter(Filter::Nearest);
-        let mut glyph_cache = GlyphCache::new("assets/Roboto-Regular.ttf", (), texture_settings)
-            .expect("Error unwrapping fonts");
+impl Render for App<'_> {
+    fn render(&mut self, circus: &[u32; 2], args: &RenderArgs, gl: &mut GlGraphics, c: Context) {
 
         // 清空屏幕
-        clear(color::BLACK, gl);
+        clear(consts::BLACK, gl);
+
+        // 绘制分数
+        text(
+            color::WHITE,
+            15,
+            format!("Your score is {}", self.score).as_str(),
+            &mut self.glyph_cache,
+            c.transform.trans(10.0, 20.0),
+            gl,
+        )
+            .unwrap();
 
         match self.game_status {
             GameStatus::TIMEOUT => {
@@ -75,40 +82,29 @@ impl Render for App {
                 self.board_wall.render(&self.circus, args, gl, c);
 
                 // 绘制墙壁
-                for wall in self.walls.iter() {
+                for wall in self.walls.iter_mut() {
                     wall.render(circus, args, gl, c);
                 }
 
                 // 绘制食物
                 self.fruit.render(circus, args, gl, c);
 
-                //// 绘制暂停幕布
-                //let curtain = rectangle::rectangle_by_corners(
-                //0.0,
-                //0.0,
-                //args.window_size[0],
-                //args.window_size[1],
-                //);
-                //rectangle(consts::GRAY, curtain, c.transform, gl);
+                // 绘制暂停幕布
+                let curtain = rectangle::rectangle_by_corners(
+                0.0,
+                0.0,
+                args.window_size[0],
+                args.window_size[1],
+                );
+                rectangle(consts::GRAY, curtain, c.transform, gl);
 
                 // 绘制暂停信息
                 text(
-                    color::WHITE,
+                    consts::ORANGE,
                     15,
                     format!("Game stop!Continue by press Enter,quit by press Esc.").as_str(),
-                    &mut glyph_cache,
+                    &mut self.glyph_cache,
                     c.transform.trans(10.0, 40.0),
-                    gl,
-                )
-                .unwrap();
-
-                // 绘制分数
-                text(
-                    color::WHITE,
-                    15,
-                    format!("Your score is {}", self.score).as_str(),
-                    &mut glyph_cache,
-                    c.transform.trans(10.0, 20.0),
                     gl,
                 )
                 .unwrap();
@@ -121,43 +117,21 @@ impl Render for App {
                 self.board_wall.render(&self.circus, args, gl, c);
 
                 // 绘制墙壁
-                for wall in self.walls.iter() {
+                for wall in self.walls.iter_mut() {
                     wall.render(&self.circus, args, gl, c);
                 }
 
                 // 绘制食物
                 self.fruit.render(&self.circus, args, gl, c);
-
-                // 绘制分数
-                text(
-                    color::WHITE,
-                    15,
-                    format!("Your score is {}", self.score).as_str(),
-                    &mut glyph_cache,
-                    c.transform.trans(10.0, 20.0),
-                    gl,
-                )
-                .unwrap();
             }
             GameStatus::GAMEOVER => {
                 // 显示游戏结束和分数
                 text(
-                    color::WHITE,
+                    consts::RED,
                     15,
                     format!("Game over! Press Space to restart, Escape to quit!").as_str(),
-                    &mut glyph_cache,
+                    &mut self.glyph_cache,
                     c.transform.trans(10.0, 40.0),
-                    gl,
-                )
-                .unwrap();
-
-                // 绘制分数
-                text(
-                    color::WHITE,
-                    15,
-                    format!("Your score is {}", self.score).as_str(),
-                    &mut glyph_cache,
-                    c.transform.trans(10.0, 20.0),
                     gl,
                 )
                 .unwrap();
